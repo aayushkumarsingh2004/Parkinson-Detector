@@ -80,7 +80,7 @@ with tab1:
             except Exception as e:
                 st.error(f"Error processing audio: {e}")
 
-# === GAIT SECTION (UPDATED WITH CONFIDENCE SCORE) ===
+# === GAIT SECTION (UPDATED WITH SCALING FIX) ===
 with tab2:
     st.header("Gait Analysis")
     st.write("Upload the 'Accelerometer.csv' file from the Sensor Logger App.")
@@ -104,6 +104,11 @@ with tab2:
                      # Fallback: Assume it's the 3rd column (Index 2)
                      signal = df.iloc[:, 2].values 
                 
+                # --- SCALING FIX (Convert G to Milli-G) ---
+                # If max value is small (< 20), it's likely in G units.
+                if np.max(np.abs(signal)) < 20:
+                    signal = signal * 1000  # Convert to Milli-G
+                
                 # Extract Features
                 feat_std = np.std(signal)
                 feat_range = np.max(signal) - np.min(signal)
@@ -113,7 +118,7 @@ with tab2:
                 features = [[feat_std, feat_range, feat_jerk]]
                 pred = gait_model.predict(features)[0]
                 
-                # THIS IS THE NEW PART (Probability Calculation)
+                # Probability Calculation
                 prob = gait_model.predict_proba(features)[0][1] 
                 
                 st.markdown("---")
